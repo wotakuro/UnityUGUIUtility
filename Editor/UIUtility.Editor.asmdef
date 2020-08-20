@@ -1,0 +1,17 @@
+{
+    "name": "UIUtility.Editor",
+    "references": [
+        "GUID:691017e0a44b99b44bd74030a3ec875d"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

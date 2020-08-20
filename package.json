@@ -1,0 +1,11 @@
+{
+  "name": "com.utj.uiutility",
+  "displayName": "UiUtility",
+  "version": "0.1.0",
+  "unity": "2019.3",
+  "description": "UIUtility",
+  "keywords": [
+    "ui"
+  ],
+  "category": "ui"
+}
