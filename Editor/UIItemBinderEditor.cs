@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using System.Reflection;
+using UnityEngine.EventSystems;
 using UnityEditor;
 using UIUtility;
-using UnityScript.Scripting.Pipeline;
-using NUnit.Framework;
 
 namespace UIUtilityEditor
 {
@@ -19,42 +17,93 @@ namespace UIUtilityEditor
 
             UIBindItem obj = target as UIBindItem;
             if( obj == null) { return; }
-            var infos = obj.GetBindInfo();
-            int deleteIndex = -1;
             bool isDirty = false;
-            for(int i =0;i<infos.Count;++i)
+            isDirty |= OnGUIUIItems(obj);
+            isDirty |= OnGUIEventItem(obj);
+
+            if (isDirty)
             {
-                var info = infos[i];
+                EditorUtility.SetDirty(target);
+            }
+        }
+
+
+        private bool OnGUIUIItems(UIBindItem obj)
+        {
+            bool isDirty = false;
+            int deleteIndex = -1;
+            var uiItemBindInfos = obj.GetUIItemBindInfos();
+            EditorGUILayout.LabelField("表示設定");
+            for (int i = 0; i < uiItemBindInfos.Count; ++i)
+            {
+                var info = uiItemBindInfos[i];
                 EditorGUILayout.BeginHorizontal();
                 string oldStr = info.itemName;
                 Graphic oldGraphic = info.itemObject;
 
                 info.itemName = EditorGUILayout.TextField(info.itemName);
-                info.itemObject = EditorGUILayout.ObjectField(info.itemObject, typeof(Graphic),true) as Graphic;
-                if( GUILayout.Button("X") ){
+                info.itemObject = EditorGUILayout.ObjectField(info.itemObject, typeof(Graphic), true) as Graphic;
+                if (GUILayout.Button("X"))
+                {
                     deleteIndex = i;
                     isDirty = true;
                 }
                 if (info.itemName != oldStr) { isDirty = true; }
                 if (info.itemObject != oldGraphic) { isDirty = true; }
-                infos[i] = info;
+                uiItemBindInfos[i] = info;
                 EditorGUILayout.EndHorizontal();
             }
-            if(deleteIndex >= 0)
+            if (deleteIndex >= 0)
             {
-                infos.RemoveAt(deleteIndex);
+                uiItemBindInfos.RemoveAt(deleteIndex);
             }
-
-            if(GUILayout.Button("+"))
+            if (GUILayout.Button("+"))
             {
-                infos.Add(new UIBindItem.UIItem());
+                uiItemBindInfos.Add(new UIBindItem.UIItem());
                 isDirty = true;
             }
-            if(isDirty)
-            {
-                EditorUtility.SetDirty(target);
-            }
+            return isDirty;
         }
+
+
+        private bool OnGUIEventItem(UIBindItem obj)
+        {
+            bool isDirty = false;
+            int deleteIndex = -1;
+            var uiItemBindInfos = obj.GetEventItemBindInfos();
+            EditorGUILayout.LabelField("イベントアイテム設定");
+            for (int i = 0; i < uiItemBindInfos.Count; ++i)
+            {
+                var info = uiItemBindInfos[i];
+                EditorGUILayout.BeginHorizontal();
+                string oldStr = info.itemName;
+                var oldEvent = info.eventTrigger;
+
+                info.itemName = EditorGUILayout.TextField(info.itemName);
+                info.eventTrigger = EditorGUILayout.ObjectField(info.eventTrigger, typeof(UIBindEventComponent),true) as UIBindEventComponent;
+                if (GUILayout.Button("X"))
+                {
+                    deleteIndex = i;
+                    isDirty = true;
+                }
+                if (info.itemName != oldStr) { isDirty = true; }
+                if (info.eventTrigger != oldEvent) { isDirty = true; }
+                uiItemBindInfos[i] = info;
+                EditorGUILayout.EndHorizontal();
+            }
+            if (deleteIndex >= 0)
+            {
+                uiItemBindInfos.RemoveAt(deleteIndex);
+            }
+            if (GUILayout.Button("+"))
+            {
+                uiItemBindInfos.Add(new UIBindItem.EventItem());
+                isDirty = true;
+            }
+            return isDirty;
+        }
+
+
     }
 
 

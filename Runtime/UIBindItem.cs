@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace UIUtility
@@ -16,16 +18,29 @@ namespace UIUtility
             [SerializeField]
             public Graphic itemObject;
         }
+        [System.Serializable]
+        public struct EventItem
+        {
+            [SerializeField]
+            public string itemName;
+            [SerializeField]
+            public UIBindEventComponent eventTrigger;
+        }
+
+
         [SerializeField]
-        private List<UIItem> bindInfos;
+        private List<UIItem> uiItemBindInfos;
+
+        [SerializeField]
+        private List<EventItem> eventItemBindInfos;
 
         private IUIBindable currentBindItem;
-
         public RectTransform rectTransform { get; private set; }
 
         private void Awake()
         {
             this.rectTransform = this.GetComponent<RectTransform>();
+            this.InitClickEvent();
         }
         private void OnDisable()
         {
@@ -33,6 +48,25 @@ namespace UIUtility
             {
                 this.currentBindItem.OnUnbind(this);
                 this.currentBindItem = null;
+            }
+        }
+        void InitClickEvent()
+        {
+            if(eventItemBindInfos == null) { return; }
+            foreach(var eventItem in eventItemBindInfos)
+            {
+                var evtTrigger = eventItem.eventTrigger;
+                evtTrigger.bindName = eventItem.itemName;
+                evtTrigger.uIBindItem = this;
+            }
+        }
+        internal void OnClickEvent(string str)
+        {
+            if (this.currentBindItem != null)
+            {
+                var type = this.currentBindItem.GetType();
+                var typeInfo = UIBindTypeInfoManager.Instance.GetTypeInfo(type);
+                typeInfo.InvokeOnClickAction(currentBindItem, str);
             }
         }
 
@@ -48,7 +82,7 @@ namespace UIUtility
             }
 
             var typeInfo = UIBindTypeInfoManager.Instance.GetTypeInfo(type);
-            foreach (var bindInfo in bindInfos)
+            foreach (var bindInfo in uiItemBindInfos)
             {
                 ApplyValue(obj, bindInfo, typeInfo);
             }
@@ -61,7 +95,7 @@ namespace UIUtility
             var itemType = bindInfo.itemObject.GetType();
             if (itemType == typeof(Text))
             {
-                var str = typeInfo.GetValue<string>(bindInfo.itemName, obj);
+                var str = typeInfo.GetValue<string>(obj , bindInfo.itemName);
                 bindInfo.itemObject.enabled = (str != null);
                 if (str != null)
                 {
@@ -71,7 +105,7 @@ namespace UIUtility
             }
             else if (itemType == typeof(RawImage))
             {
-                var texture = typeInfo.GetValue<Texture>(bindInfo.itemName, obj);
+                var texture = typeInfo.GetValue<Texture>(obj,bindInfo.itemName);
                 bindInfo.itemObject.enabled = (texture != null);
                 if (texture != null)
                 {
@@ -81,10 +115,15 @@ namespace UIUtility
             }
         }
 
-        public List<UIItem> GetBindInfo()
+        public List<UIItem> GetUIItemBindInfos()
         {
-            if(bindInfos == null) { bindInfos = new List<UIItem>(); }
-            return bindInfos;
+            if (uiItemBindInfos == null) { uiItemBindInfos = new List<UIItem>(); }
+            return uiItemBindInfos;
+        }
+        public List<EventItem> GetEventItemBindInfos()
+        {
+            if (eventItemBindInfos == null) { eventItemBindInfos = new List<EventItem>(); }
+            return eventItemBindInfos;
         }
     }
 

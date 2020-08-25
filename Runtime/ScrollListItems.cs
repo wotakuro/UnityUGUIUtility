@@ -56,8 +56,8 @@ namespace UIUtility
             {
                 RectTransform rectTrans = bufferObjects[i].uiItem.GetComponent<RectTransform>();
                 rectTrans.pivot = new Vector2(0.5f, 1f);
-                rectTrans.anchorMin = new Vector2(0.5f, 1f);
-                rectTrans.anchorMax = new Vector2(0.5f, 1f);
+                rectTrans.anchorMin = new Vector2( rectTrans.anchorMin.x, 1f);
+                rectTrans.anchorMax = new Vector2(rectTrans.anchorMax.x, 1f);
                 rectTrans.ForceUpdateRectTransforms();
                 bufferObjects[i].uiItem.gameObject.SetActive(false);
             }
@@ -152,15 +152,20 @@ namespace UIUtility
             if (this.bindItems != null && 0 <= posIdx && posIdx < bindItems.Count)
             {
                 bufferObj.uiItem.Bind(this.bindItems[posIdx]);
+                bufferObj.uiItem.gameObject.SetActive(true);
             }
-            bufferObj.uiItem.gameObject.SetActive( posIdx >= 0);
+            else
+            {
+                bufferObj.uiItem.gameObject.SetActive(false);
+            }
             this.bufferObjects[bufIdx] = bufferObj;            
         }
 
 
         public void Bind<T>(IEnumerable<T> datas) where T : IUIBindable
         {
-            if( bindItems == null)
+            this.UnBindAllBufferObject();
+            if ( bindItems == null)
             {
                 bindItems = new List<IUIBindable>(1024);
             }
@@ -174,6 +179,15 @@ namespace UIUtility
 
             this.lastItemStartIdx = int.MinValue;
             this.OnChangeScrollValue();
+        }
+
+        private void UnBindAllBufferObject()
+        {
+            this.lastItemStartIdx = -1;
+            for (int i = 0; i < bufferObjects.Count; ++i)
+            {
+                this.SetBufferObjectAtPosition(i, -1);
+            }
         }
     }
 

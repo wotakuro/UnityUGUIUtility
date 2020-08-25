@@ -6,7 +6,7 @@ using System.Reflection;
 
 namespace UIUtility
 {
-    public class UIBindTypeInfoManager
+    internal class UIBindTypeInfoManager
     {
         public static UIBindTypeInfoManager Instance { get; set; } = new UIBindTypeInfoManager();
 

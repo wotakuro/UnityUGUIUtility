@@ -3,12 +3,72 @@ using System.Reflection;
 
 namespace UIUtility
 {
-    public class UIBindTypeInfo
+    internal class UIBindTypeInfo
     {
-        private Dictionary<string, FieldInfo> fieldInfos;
-        private Dictionary<string, PropertyInfo> propInfos;
+        private class VarInfo
+        {
+            public Dictionary<string, FieldInfo> fieldInfos;
+            public Dictionary<string, PropertyInfo> propInfos;
+
+            public void AddProp(string name, PropertyInfo prop)
+            {
+                if (propInfos == null)
+                {
+                    propInfos = new Dictionary<string, PropertyInfo>();
+                }
+                propInfos.Add(name, prop);
+            }
+            public void AddField(string name, FieldInfo field)
+            {
+                if (fieldInfos == null)
+                {
+                    fieldInfos = new Dictionary<string, FieldInfo>();
+                }
+                fieldInfos.Add(name, field);
+            }
+        }
+        private VarInfo valueBindVarInfo = new VarInfo();
+
+        private Dictionary<string, MethodInfo> onClickMethodInfos;
 
         public UIBindTypeInfo(System.Type t)
+        {
+            CollectVars< UIItemValueAttribute>(t, valueBindVarInfo);
+            CollectMethodInfos<UIClickActionAttribute>(t, ref onClickMethodInfos);
+        }
+
+        private void CollectMethodInfos<T>(System.Type t,ref Dictionary<string, MethodInfo> methodInfos) where T : UIBindAttribute
+        {
+            var bindingFlag = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var methods = t.GetMethods(bindingFlag);
+
+            foreach(var method in methods)
+            {
+                var attr = method.GetCustomAttribute<T>();
+                if(attr != null)
+                {
+                    if( methodInfos == null)
+                    {
+                        methodInfos = new Dictionary<string, MethodInfo>();
+                    }
+                    methodInfos.Add(attr.GetName(), method);
+                }
+            }
+        }
+
+        internal bool InvokeOnClickAction(IUIBindable obj,string str)
+        {
+            if(onClickMethodInfos == null) { return false; }
+            MethodInfo method = null;
+            if( onClickMethodInfos.TryGetValue(str,out method))
+            {
+                method.Invoke(obj,null);
+                return true;
+            }
+            return false;
+        }
+
+        private void CollectVars<T>(System.Type t ,VarInfo info) where T: UIBindAttribute
         {
             var bindingFlag = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
@@ -17,53 +77,41 @@ namespace UIUtility
 
             foreach (var field in fields)
             {
-                var attr = field.GetCustomAttribute<UIValueBindAttribute>();
+                var attr = field.GetCustomAttribute<T>();
                 if (attr != null)
                 {
-                    AddField(attr.GetName(), field);
+                    valueBindVarInfo.AddField(attr.GetName(), field);
                 }
             }
             foreach (var prop in props)
             {
-                var attr = prop.GetCustomAttribute<UIValueBindAttribute>();
+                var attr = prop.GetCustomAttribute<T>();
                 if (attr != null)
                 {
-                    AddProp(attr.GetName(), prop);
+                    valueBindVarInfo.AddProp(attr.GetName(), prop);
                 }
             }
-        }
-        private void AddProp(string name, PropertyInfo prop)
-        {
-            if (propInfos == null)
-            {
-                propInfos = new Dictionary<string, PropertyInfo>();
-            }
-            propInfos.Add(name, prop);
-        }
-        private void AddField(string name, FieldInfo field)
-        {
-            if (fieldInfos == null)
-            {
-                fieldInfos = new Dictionary<string, FieldInfo>();
-            }
-            fieldInfos.Add(name, field);
+
         }
 
-        public TVal GetValue<TVal>(string str, object obj) where TVal : class
+        internal TVal GetValue<TVal>(IUIBindable obj,string str ) where TVal : class
         {
-            if (fieldInfos != null)
+            if(valueBindVarInfo == null) { 
+                return null; 
+            }
+            if (valueBindVarInfo.fieldInfos != null)
             {
                 FieldInfo field = null;
-                if (fieldInfos.TryGetValue(str, out field))
+                if (valueBindVarInfo.fieldInfos.TryGetValue(str, out field))
                 {
                     var val = field.GetValue(obj);
                     return val as TVal;
                 }
             }
-            if (propInfos != null)
+            if (valueBindVarInfo.propInfos != null)
             {
                 PropertyInfo prop = null;
-                if (propInfos.TryGetValue(str, out prop))
+                if (valueBindVarInfo.propInfos.TryGetValue(str, out prop))
                 {
                     var val = prop.GetValue(obj);
                     return val as TVal;
