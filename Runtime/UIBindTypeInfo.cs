@@ -1,7 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using System.Collections.Generic;
 using System.Reflection;
 
 namespace UIUtility
@@ -33,7 +30,6 @@ namespace UIUtility
                 {
                     AddProp(attr.GetName(), prop);
                 }
-
             }
         }
         private void AddProp(string name, PropertyInfo prop)

@@ -11,10 +11,12 @@ namespace UIUtility
         public static UIBindTypeInfoManager Instance { get; set; } = new UIBindTypeInfoManager();
 
         private Dictionary<System.Type, UIBindTypeInfo> typeInfoDictionary;
+
         private UIBindTypeInfoManager()
         {
             typeInfoDictionary = new Dictionary<System.Type, UIBindTypeInfo>();
         }
+
         public UIBindTypeInfo GetTypeInfo(System.Type type)
         {
             UIBindTypeInfo val = null;
@@ -23,7 +25,6 @@ namespace UIUtility
                 val = new UIBindTypeInfo(type);
                 typeInfoDictionary.Add(type, val);
             }
-
             return val;
         }
     }

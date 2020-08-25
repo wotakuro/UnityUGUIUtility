@@ -6,18 +6,18 @@ using System.Reflection;
 using UnityEditor;
 using UIUtility;
 using UnityScript.Scripting.Pipeline;
+using NUnit.Framework;
 
 namespace UIUtilityEditor
 {
-    [CustomEditor(typeof(UIItemBinder))]
+    [CustomEditor(typeof(UIBindItem))]
     public class UIItemBinderEditor:Editor
     {
         public override void OnInspectorGUI()
         {
-            base.OnInspectorGUI();
             serializedObject.Update();
 
-            UIItemBinder obj = target as UIItemBinder;
+            UIBindItem obj = target as UIBindItem;
             if( obj == null) { return; }
             var infos = obj.GetBindInfo();
             int deleteIndex = -1;
@@ -40,9 +40,20 @@ namespace UIUtilityEditor
                 infos[i] = info;
                 EditorGUILayout.EndHorizontal();
             }
-            serializedObject.ApplyModifiedProperties();
+            if(deleteIndex >= 0)
+            {
+                infos.RemoveAt(deleteIndex);
+            }
 
-
+            if(GUILayout.Button("+"))
+            {
+                infos.Add(new UIBindItem.UIItem());
+                isDirty = true;
+            }
+            if(isDirty)
+            {
+                EditorUtility.SetDirty(target);
+            }
         }
     }
 

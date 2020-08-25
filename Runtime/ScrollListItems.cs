@@ -10,10 +10,10 @@ namespace UIUtility
     {
         private struct BufferObjectInfo
         {
-            public UIItemBinder uiItem;
+            public UIBindItem uiItem;
             public int index;
 
-            public BufferObjectInfo(UIItemBinder item)
+            public BufferObjectInfo(UIBindItem item)
             {
                 this.uiItem = item;
                 this.index = -1;
@@ -28,9 +28,8 @@ namespace UIUtility
         }
 
         public ScrollRect scrollRect;
-        public UIItemBinder bindPrefab;
-        private List<object> bindItems;
-
+        public UIBindItem bindPrefab;
+        private List<IUIBindable> bindItems;
         private List<BufferObjectInfo> bufferObjects;
 
         private Rect itemRect;
@@ -40,7 +39,6 @@ namespace UIUtility
 
         private void Awake()
         {
-
             var obj = Instantiate(bindPrefab, scrollRect.content);
             this.scrollItemRect = scrollRect.GetComponent<RectTransform>().rect;
             this.itemRect = obj.GetComponent<RectTransform>().rect;
@@ -48,34 +46,9 @@ namespace UIUtility
             this.bufferObjects.Add(new BufferObjectInfo(obj));
             this.InitBufferObject();
             scrollRect.onValueChanged.AddListener(OnScrollChange);
-
-
-            Debug.Log(scrollItemRect);
             this.scrollRect.content.ForceUpdateRectTransforms();
-
         }
 
-
-        private IEnumerator Start()
-        {
-            List<int> vals = new List<int>();
-            for (int i = 0; i < 50; ++i)
-            {
-                vals.Add(i);
-            }
-
-
-            this.Bind(vals);
-
-            vals.Clear();
-            for (int i = 0; i < 10; ++i)
-            {
-                vals.Add(i);
-            }
-            yield return new WaitForSeconds(2.0f);
-
-            Debug.Log(scrollRect.GetComponent<RectTransform>().rect);
-        }
 
         private void InitBufferObject()
         {
@@ -104,7 +77,10 @@ namespace UIUtility
 
         private void OnScrollChange(Vector2 val)
         {
-            OnChangeScrollValue();
+            if (this.bindItems != null)
+            {
+                OnChangeScrollValue();
+            }
         }
 
         private void OnChangeScrollValue() { 
@@ -113,6 +89,7 @@ namespace UIUtility
             int itemIdx = (int)(-topPos / itemRect.height);
 
             if( itemIdx == this.lastItemStartIdx) { return; }
+
             int num = bufferObjects.Count;
 
             int minIdx = int.MaxValue;
@@ -172,17 +149,20 @@ namespace UIUtility
             bufferObj.index = posIdx;
             
             bufferObj.uiItem.rectTransform.anchoredPosition = position;
-
+            if (this.bindItems != null && 0 <= posIdx && posIdx < bindItems.Count)
+            {
+                bufferObj.uiItem.Bind(this.bindItems[posIdx]);
+            }
             bufferObj.uiItem.gameObject.SetActive( posIdx >= 0);
             this.bufferObjects[bufIdx] = bufferObj;            
         }
 
 
-        public void Bind<T>(IEnumerable<T> datas)
+        public void Bind<T>(IEnumerable<T> datas) where T : IUIBindable
         {
             if( bindItems == null)
             {
-                bindItems = new List<object>(1024);
+                bindItems = new List<IUIBindable>(1024);
             }
             bindItems.Clear();
             foreach( var data in datas)
